@@ -1,22 +1,75 @@
-// Mock API service for production-like behavior
+// Mock API service for production-like behavior with roles
 const API = {
   // Auth endpoints
   auth: {
     login: async (email, password) => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Determine role based on email
+      let role = 'passenger';
+      let name = email.split('@')[0];
+      
+      // Admin detection
+      const adminEmails = [
+        'admin@abiaway.gov.ng',
+        'admin@abiaone.gov.ng',
+        'director@abiaway.gov.ng'
+      ];
+      
+      // Driver detection
+      const driverEmails = [
+        'chidi.okonkwo@abiaway.gov.ng',
+        'emeka.okafor@abiaway.gov.ng',
+        'ngozi.eze@abiaway.gov.ng',
+        'adaobi.nwosu@abiaway.gov.ng',
+        'driver@abiaway.gov.ng'
+      ];
+
+      if (adminEmails.includes(email.toLowerCase())) {
+        role = 'admin';
+        name = 'Admin User';
+      } else if (driverEmails.includes(email.toLowerCase())) {
+        role = 'driver';
+        // Use proper names for known drivers
+        if (email.toLowerCase() === 'chidi.okonkwo@abiaway.gov.ng') name = 'Chidi Okonkwo';
+        if (email.toLowerCase() === 'emeka.okafor@abiaway.gov.ng') name = 'Emeka Okafor';
+        if (email.toLowerCase() === 'ngozi.eze@abiaway.gov.ng') name = 'Ngozi Eze';
+        if (email.toLowerCase() === 'adaobi.nwosu@abiaway.gov.ng') name = 'Adaobi Nwosu';
+      } else {
+        // Regular passenger
+        name = email === 'passenger@example.com' ? 'Abuoma David' : name;
+      }
+      
       return { 
-        user: { id: 1, name: 'Abuoma David', email, tier: 'premium' },
+        user: { 
+          id: 1, 
+          name: name,
+          email, 
+          role,
+          tier: role === 'admin' ? 'admin' : role === 'driver' ? 'driver' : 'premium'
+        },
         token: 'mock-jwt-token-12345'
       };
     },
+    
     logout: async () => {
       await new Promise(resolve => setTimeout(resolve, 300));
       return { success: true };
     },
+    
     verifyToken: async () => {
       await new Promise(resolve => setTimeout(resolve, 500));
-      return { valid: true, user: { name: 'Abuoma David', tier: 'premium' } };
+      // For demo, return a default passenger
+      return { 
+        valid: true, 
+        user: { 
+          name: 'Abuoma David', 
+          email: 'passenger@example.com',
+          role: 'passenger',
+          tier: 'premium' 
+        }
+      };
     }
   },
 

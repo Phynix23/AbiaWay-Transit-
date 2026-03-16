@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './components/Landing/LandingPage';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
-import Footer from './components/Layout/Footer';
+// Remove Footer import from here
 import MapTab from './components/Map/MapTab';
 import WalletTab from './components/Wallet/WalletTab';
 import BookingTab from './components/Booking/BookingTab';
@@ -13,6 +13,7 @@ import QRCodeModal from './components/Modals/QRCodeModal';
 import NotificationsModal from './components/Modals/NotificationsModal';
 import LoginModal from './components/Auth/LoginModal';
 import LoadingSpinner from './components/Layout/LoadingSpinner';
+import AdminGuard from './components/Auth/AdminGuard';
 import { WalletProvider } from './contexts/WalletContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { MapProvider } from './contexts/MapContext';
@@ -22,7 +23,7 @@ import { loadIcons } from './utils/iconLoader';
 import './App.css';
 
 function AppContent() {
-  const [showLanding, setShowLanding] = useState(true); // Start with landing page
+  const [showLanding, setShowLanding] = useState(true);
   const [currentTab, setCurrentTab] = useState('map');
   const [modalOpen, setModalOpen] = useState(null);
   const { user, loading } = useAuth();
@@ -40,7 +41,28 @@ function AppContent() {
     return <LandingPage onGetStarted={() => setShowLanding(false)} />;
   }
 
-  // Show main app after landing
+  // Admin-only pages wrapped with AdminGuard
+  const renderAdminContent = () => {
+    // Driver dashboard is admin-only
+    if (currentTab === 'driver') {
+      return (
+        <AdminGuard>
+          <DriverTab />
+        </AdminGuard>
+      );
+    }
+
+    // Public pages (map, wallet, booking)
+    return (
+      <>
+        {currentTab === 'map' && <MapTab />}
+        {currentTab === 'wallet' && <WalletTab onOpenModal={setModalOpen} />}
+        {currentTab === 'booking' && <BookingTab />}
+      </>
+    );
+  };
+
+  // Main app - NO FOOTER HERE
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
@@ -52,12 +74,9 @@ function AppContent() {
           onLoginClick={() => setModalOpen('login')} 
         />
         
-        {currentTab === 'map' && <MapTab />}
-        {currentTab === 'wallet' && <WalletTab onOpenModal={setModalOpen} />}
-        {currentTab === 'booking' && <BookingTab />}
-        {currentTab === 'driver' && <DriverTab />}
+        {renderAdminContent()}
         
-        <Footer />
+        {/* Footer removed from here - only on landing page */}
       </main>
       
       <NotificationToast />
