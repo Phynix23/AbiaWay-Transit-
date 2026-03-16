@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import LandingPage from './components/Landing/LandingPage';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
 import Footer from './components/Layout/Footer';
@@ -16,11 +17,12 @@ import { WalletProvider } from './contexts/WalletContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { MapProvider } from './contexts/MapContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
-import { BookingProvider } from './contexts/BookingContext';  // Add this import
+import { BookingProvider } from './contexts/BookingContext';
 import { loadIcons } from './utils/iconLoader';
 import './App.css';
 
 function AppContent() {
+  const [showLanding, setShowLanding] = useState(true); // Start with landing page
   const [currentTab, setCurrentTab] = useState('map');
   const [modalOpen, setModalOpen] = useState(null);
   const { user, loading } = useAuth();
@@ -33,6 +35,12 @@ function AppContent() {
     return <LoadingSpinner fullScreen />;
   }
 
+  // Show landing page first
+  if (showLanding) {
+    return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+  }
+
+  // Show main app after landing
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
@@ -80,9 +88,9 @@ function App() {
       <NotificationProvider>
         <WalletProvider>
           <MapProvider>
-            <BookingProvider>  {/* Add BookingProvider here */}
+            <BookingProvider>
               <AppContent />
-            </BookingProvider>  {/* Add BookingProvider here */}
+            </BookingProvider>
           </MapProvider>
         </WalletProvider>
       </NotificationProvider>
