@@ -5,6 +5,7 @@ const LandingPage = ({ onGetStarted }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const [counts, setCounts] = useState({ users: 0, buses: 0, trips: 0, rating: 0 });
+  const [hasAnimated, setHasAnimated] = useState(false);
   
   // Refs for animation
   const heroRef = useRef(null);
@@ -21,31 +22,50 @@ const LandingPage = ({ onGetStarted }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Counter animation
+  // Counter animation when stats section is visible
   useEffect(() => {
-    const targets = { users: 10000, buses: 50, trips: 100000, rating: 48 };
-    const duration = 2000;
-    const stepTime = 20;
-    const steps = duration / stepTime;
-    
-    let currentStep = 0;
-    const interval = setInterval(() => {
-      currentStep++;
-      if (currentStep <= steps) {
-        const progress = currentStep / steps;
-        setCounts({
-          users: Math.floor(progress * targets.users),
-          buses: Math.floor(progress * targets.buses),
-          trips: Math.floor(progress * targets.trips),
-          rating: Math.floor(progress * targets.rating) / 10,
-        });
-      } else {
-        clearInterval(interval);
-      }
-    }, stepTime);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          
+          // Animate counters
+          const targets = { users: 10000, buses: 50, trips: 100000, rating: 48 };
+          const duration = 2000;
+          const stepTime = 20;
+          const steps = duration / stepTime;
+          
+          let currentStep = 0;
+          const interval = setInterval(() => {
+            currentStep++;
+            if (currentStep <= steps) {
+              const progress = currentStep / steps;
+              setCounts({
+                users: Math.floor(progress * targets.users),
+                buses: Math.floor(progress * targets.buses),
+                trips: Math.floor(progress * targets.trips),
+                rating: Math.floor(progress * targets.rating) / 10,
+              });
+            } else {
+              clearInterval(interval);
+            }
+          }, stepTime);
+        }
+      },
+      { threshold: 0.3 }
+    );
 
-    return () => clearInterval(interval);
-  }, []);
+    if (statsRef.current) {
+      observer.observe(statsRef.current);
+    }
+
+    return () => {
+      if (statsRef.current) {
+        observer.unobserve(statsRef.current);
+      }
+    };
+  }, [hasAnimated]);
 
   // Intersection Observer for fade-in animations
   useEffect(() => {
@@ -61,7 +81,7 @@ const LandingPage = ({ onGetStarted }) => {
       { threshold: 0.1, rootMargin: '0px' }
     );
 
-    const elements = [featuresRef.current, stepsRef.current, statsRef.current];
+    const elements = [featuresRef.current, stepsRef.current];
     elements.forEach(el => el && observer.observe(el));
 
     return () => elements.forEach(el => el && observer.unobserve(el));
@@ -282,25 +302,50 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section id="stats" ref={statsRef} className="container mx-auto px-4 py-24 opacity-0 translate-y-10 transition-all duration-1000">
+      {/* Stats Section with Counter Animation */}
+      <section id="stats" ref={statsRef} className="container mx-auto px-4 py-24">
         <div className="glass-card p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-blue-600/10 animate-gradient"></div>
           <div className="grid md:grid-cols-4 gap-8 text-center relative z-10">
-            {[
-              { value: counts.users.toLocaleString(), label: 'Active Users', icon: Users, suffix: '+' },
-              { value: counts.buses, label: 'Buses Tracked', icon: Bus, suffix: '+' },
-              { value: counts.trips.toLocaleString(), label: 'Trips Completed', icon: Clock, suffix: '+' },
-              { value: counts.rating.toFixed(1), label: 'User Rating', icon: Star, suffix: '★' },
-            ].map((stat, index) => (
-              <div key={index} className="group animate-fadeInUp" style={{ animationDelay: `${index * 200}ms` }}>
-                <stat.icon className="w-8 h-8 mx-auto mb-3 text-green-400 group-hover:scale-110 transition-transform" />
-                <div className="text-4xl font-bold text-green-400 mb-2 group-hover:scale-110 transition-transform">
-                  {stat.value}{stat.suffix}
-                </div>
-                <div className="text-gray-400">{stat.label}</div>
+            {/* Active Users */}
+            <div className="group">
+              <Users className="w-10 h-10 mx-auto mb-4 text-green-400 group-hover:scale-110 transition-transform duration-300" />
+              <div className="text-5xl font-bold text-green-400 mb-2 tabular-nums">
+                {counts.users.toLocaleString()}+
               </div>
-            ))}
+              <div className="text-gray-400">Active Users</div>
+              <div className="w-0 h-1 bg-green-500 mx-auto group-hover:w-16 transition-all duration-500 mt-2"></div>
+            </div>
+
+            {/* Buses Tracked */}
+            <div className="group">
+              <Bus className="w-10 h-10 mx-auto mb-4 text-blue-400 group-hover:scale-110 transition-transform duration-300" />
+              <div className="text-5xl font-bold text-blue-400 mb-2 tabular-nums">
+                {counts.buses}+
+              </div>
+              <div className="text-gray-400">Buses Tracked</div>
+              <div className="w-0 h-1 bg-blue-500 mx-auto group-hover:w-16 transition-all duration-500 mt-2"></div>
+            </div>
+
+            {/* Trips Completed */}
+            <div className="group">
+              <Clock className="w-10 h-10 mx-auto mb-4 text-yellow-400 group-hover:scale-110 transition-transform duration-300" />
+              <div className="text-5xl font-bold text-yellow-400 mb-2 tabular-nums">
+                {counts.trips.toLocaleString()}+
+              </div>
+              <div className="text-gray-400">Trips Completed</div>
+              <div className="w-0 h-1 bg-yellow-500 mx-auto group-hover:w-16 transition-all duration-500 mt-2"></div>
+            </div>
+
+            {/* User Rating */}
+            <div className="group">
+              <Star className="w-10 h-10 mx-auto mb-4 text-purple-400 fill-purple-400 group-hover:scale-110 transition-transform duration-300" />
+              <div className="text-5xl font-bold text-purple-400 mb-2 tabular-nums">
+                {counts.rating.toFixed(1)}★
+              </div>
+              <div className="text-gray-400">User Rating</div>
+              <div className="w-0 h-1 bg-purple-500 mx-auto group-hover:w-16 transition-all duration-500 mt-2"></div>
+            </div>
           </div>
         </div>
       </section>
@@ -423,6 +468,17 @@ const LandingPage = ({ onGetStarted }) => {
           }
         }
         
+        @keyframes countUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
         .animate-float {
           animation: float 3s ease-in-out infinite;
         }
@@ -447,6 +503,10 @@ const LandingPage = ({ onGetStarted }) => {
         
         .animate-bounce-slow {
           animation: bounce 2s infinite;
+        }
+        
+        .animate-countUp {
+          animation: countUp 0.5s ease-out forwards;
         }
         
         .delay-100 { animation-delay: 0.1s; }
