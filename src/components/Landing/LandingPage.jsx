@@ -137,54 +137,54 @@ const LandingPage = ({ onGetStarted }) => {
           </div>
         </div>
       </section>
-
+      
       {/* Footer - Only on Landing Page */}
-      <footer className="border-t border-white/10 mt-16">
-        <div className="container mx-auto px-4 py-12">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Bus className="w-6 h-6 text-green-400" />
-                <span className="font-bold text-lg">Abia Way</span>
-              </div>
-              <p className="text-sm text-gray-400">Smart transit system for Abia State. Making travel easier, safer, and more efficient.</p>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-green-400 transition">About Us</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Contact</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">FAQs</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Support</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-gray-400">
-                <li><a href="#" className="hover:text-green-400 transition">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-green-400 transition">Cookie Policy</a></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Download App</h4>
-              <div className="space-y-2">
-                <button className="w-full bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm transition">
-                  <i data-lucide="apple" className="w-4 h-4 inline mr-2"></i>
-                  App Store
-                </button>
-                <button className="w-full bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm transition">
-                  <i data-lucide="chrome" className="w-4 h-4 inline mr-2"></i>
-                  Google Play
-                </button>
-              </div>
-            </div>
-          </div>
-          <div className="mt-8 pt-8 text-center text-xs text-gray-500 border-t border-white/10">
-            © {new Date().getFullYear()} Abia Way Transit System. All rights reserved.
-          </div>
+<footer className="border-t border-white/10 mt-16">
+  <div className="container mx-auto px-4 py-12">
+    <div className="grid md:grid-cols-4 gap-8">
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <Bus className="w-6 h-6 text-green-400" />
+          <span className="font-bold text-lg">Abia Way</span>
         </div>
-      </footer>
+        <p className="text-sm text-gray-400">Smart transit system for Abia State. Making travel easier, safer, and more efficient.</p>
+      </div>
+      <div>
+        <h4 className="font-semibold mb-4">Quick Links</h4>
+        <ul className="space-y-2 text-sm text-gray-400">
+          <li><a href="#" className="hover:text-green-400 transition">About Us</a></li>
+          <li><a href="#" className="hover:text-green-400 transition">Contact</a></li>
+          <li><a href="#" className="hover:text-green-400 transition">FAQs</a></li>
+          <li><a href="#" className="hover:text-green-400 transition">Support</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 className="font-semibold mb-4">Legal</h4>
+        <ul className="space-y-2 text-sm text-gray-400">
+          <li><a href="#" className="hover:text-green-400 transition">Terms of Service</a></li>
+          <li><a href="#" className="hover:text-green-400 transition">Privacy Policy</a></li>
+          <li><a href="#" className="hover:text-green-400 transition">Cookie Policy</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 className="font-semibold mb-4">Download App</h4>
+        <div className="space-y-2">
+          <button className="w-full bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm transition">
+            <i data-lucide="apple" className="w-4 h-4 inline mr-2"></i>
+            App Store
+          </button>
+          <button className="w-full bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg text-sm transition">
+            <i data-lucide="chrome" className="w-4 h-4 inline mr-2"></i>
+            Google Play
+          </button>
+        </div>
+      </div>
+    </div>
+    <div className="mt-8 pt-8 text-center text-xs text-gray-500 border-t border-white/10">
+      © {new Date().getFullYear()} Abia Way Transit System. All rights reserved.
+    </div>
+  </div>
+</footer>
     </div>
   );
 };

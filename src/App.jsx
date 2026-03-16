@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './components/Landing/LandingPage';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
-// Remove Footer import from here
+// REMOVE this import: import Footer from './components/Layout/Footer';
 import MapTab from './components/Map/MapTab';
 import WalletTab from './components/Wallet/WalletTab';
 import BookingTab from './components/Booking/BookingTab';
@@ -46,7 +46,7 @@ function AppContent() {
     // Driver dashboard is admin-only
     if (currentTab === 'driver') {
       return (
-        <AdminGuard>
+        <AdminGuard requiredRole="driver">
           <DriverTab />
         </AdminGuard>
       );
@@ -76,7 +76,7 @@ function AppContent() {
         
         {renderAdminContent()}
         
-        {/* Footer removed from here - only on landing page */}
+        {/* Footer REMOVED from here */}
       </main>
       
       <NotificationToast />
