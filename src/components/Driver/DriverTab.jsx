@@ -2,13 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-// Fix for default markers in React
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+// Fix for default markers - with safe check
+const fixLeafletIcons = () => {
+  if (typeof L !== 'undefined' && L.Icon && L.Icon.Default) {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+  }
+};
 
 const DriverTab = () => {
   const [location, setLocation] = useState('Umuahia Main Park');
@@ -20,7 +24,10 @@ const DriverTab = () => {
   const routeIntervalRef = useRef(null);
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current || typeof L === 'undefined') return;
+
+    // Fix Leaflet icons
+    fixLeafletIcons();
 
     // Initialize map
     const map = L.map(mapRef.current).setView([5.5244, 7.5244], 13);
@@ -84,7 +91,9 @@ const DriverTab = () => {
 
     // Handle window resize
     const handleResize = () => {
-      map.invalidateSize();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
     };
     window.addEventListener('resize', handleResize);
 

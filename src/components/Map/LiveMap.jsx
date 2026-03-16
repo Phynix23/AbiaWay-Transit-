@@ -1,25 +1,25 @@
 import React, { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
-import 'leaflet-routing-machine';
 import { useNotification } from '../../contexts/NotificationContext';
 import { busStops, abiaCenter } from '../../data/constants';
 
-// Fix for default markers
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-});
+// Fix for default markers - MUST be inside component or with safe check
+const fixLeafletIcons = () => {
+  if (typeof L !== 'undefined' && L.Icon && L.Icon.Default) {
+    delete L.Icon.Default.prototype._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+    });
+  }
+};
 
 const LiveMap = () => {
   const mapRef = useRef(null);
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
-  const routingControlRef = useRef(null);
-  const [selectedRoute, setSelectedRoute] = useState(null);
   const [mapLayers, setMapLayers] = useState([
     { name: 'Street', url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', active: true },
     { name: 'Satellite', url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', active: false },
@@ -28,7 +28,10 @@ const LiveMap = () => {
   const { showNotification } = useNotification();
 
   useEffect(() => {
-    if (!mapRef.current || mapInstanceRef.current) return;
+    if (!mapRef.current || mapInstanceRef.current || typeof L === 'undefined') return;
+
+    // Fix Leaflet icons
+    fixLeafletIcons();
 
     // Initialize map with professional settings
     const map = L.map(mapRef.current, {
@@ -37,7 +40,7 @@ const LiveMap = () => {
       zoomControl: false,
       fadeAnimation: true,
       markerZoomAnimation: true,
-      preferCanvas: true, // Better performance for many markers
+      preferCanvas: true,
     });
     mapInstanceRef.current = map;
 
@@ -65,6 +68,8 @@ const LiveMap = () => {
 
     Object.entries(busStops).forEach(([key, coords]) => {
       const stop = stopNames[key];
+      if (!stop) return;
+      
       const icon = L.divIcon({
         className: `custom-stop-icon ${stop.type}`,
         html: `<i data-lucide="${stop.type === 'terminal' ? 'building-2' : 'map-pin'}" class="w-4 h-4 text-white"></i>`,
@@ -73,20 +78,14 @@ const LiveMap = () => {
         popupAnchor: [0, -15]
       });
 
-      const marker = L.marker(coords, { icon })
+      L.marker(coords, { icon })
         .addTo(map)
         .bindPopup(`
           <div class="text-center">
             <b class="text-lg">${stop.name}</b><br>
-            <span class="text-sm text-gray-600">${stop.type.charAt(0).toUpperCase() + stop.type.slice(1)}</span><br>
-            <button class="btn-route px-3 py-1 mt-2 bg-green-600 text-white rounded-lg text-sm" 
-                    onclick="window.setRoute('${key}')">
-              Plan Route
-            </button>
+            <span class="text-sm text-gray-600">${stop.type.charAt(0).toUpperCase() + stop.type.slice(1)}</span>
           </div>
         `);
-      
-      markersRef.current.push(marker);
     });
 
     // Add professional bus markers with live data
@@ -112,17 +111,14 @@ const LiveMap = () => {
             <b class="text-lg">Bus #${bus.id}</b><br>
             <span>Route: ${bus.route}</span><br>
             <span>Capacity: ${bus.capacity}%</span><br>
-            <span>Speed: ${bus.speed} km/h</span><br>
-            <button class="btn-track px-3 py-1 mt-2 bg-blue-600 text-white rounded-lg text-sm">
-              Track
-            </button>
+            <span>Speed: ${bus.speed} km/h</span>
           </div>
         `);
       
       markersRef.current.push(marker);
     });
 
-    // Add professional route lines with gradients
+    // Add professional route lines
     const routePoints = [
       busStops.umuahia,
       [5.4244, 7.4744],
@@ -138,12 +134,7 @@ const LiveMap = () => {
       lineCap: 'round',
       lineJoin: 'round',
       dashArray: '5, 10',
-      dashOffset: '0'
     }).addTo(map);
-
-    // Add heat map layer for traffic (simulated)
-    const heatPoints = busLocations.map(bus => [bus.lat, bus.lng, bus.capacity / 100]);
-    // Note: You'd need leaflet-heat plugin for actual heat maps
 
     // Force map to render correctly
     setTimeout(() => {
@@ -152,7 +143,9 @@ const LiveMap = () => {
 
     // Handle window resize
     const handleResize = () => {
-      map.invalidateSize();
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.invalidateSize();
+      }
     };
     window.addEventListener('resize', handleResize);
 
@@ -214,11 +207,6 @@ const LiveMap = () => {
     }
   };
 
-  const measureDistance = () => {
-    showNotification('Measure', '📏 Click two points on the map to measure distance');
-    // Implement measuring tool
-  };
-
   return (
     <div className="lg:col-span-2">
       <div className="glass-card p-4">
@@ -254,13 +242,6 @@ const LiveMap = () => {
               onClick={centerMap}
             >
               <i data-lucide="locate" className="w-4 h-4"></i>
-            </button>
-            <button 
-              className="btn-secondary px-3 py-1 rounded-lg text-sm tooltip"
-              data-tooltip="Measure distance"
-              onClick={measureDistance}
-            >
-              <i data-lucide="ruler" className="w-4 h-4"></i>
             </button>
             <button 
               className="btn-secondary px-3 py-1 rounded-lg text-sm tooltip"
@@ -303,29 +284,6 @@ const LiveMap = () => {
               Passengers Today
             </p>
           </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 mt-4">
-          <button className="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 text-sm hover:bg-green-500/30 transition flex items-center gap-2">
-            <i data-lucide="bus" className="w-4 h-4"></i>
-            Aba-Umuahia
-            <span className="bg-green-500/30 px-2 py-0.5 rounded-full text-xs">8 buses</span>
-          </button>
-          <button className="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 text-sm hover:bg-green-500/30 transition flex items-center gap-2">
-            <i data-lucide="bus" className="w-4 h-4"></i>
-            Umuahia-Ohafia
-            <span className="bg-green-500/30 px-2 py-0.5 rounded-full text-xs">5 buses</span>
-          </button>
-          <button className="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 text-sm hover:bg-green-500/30 transition flex items-center gap-2">
-            <i data-lucide="bus" className="w-4 h-4"></i>
-            Aba City
-            <span className="bg-green-500/30 px-2 py-0.5 rounded-full text-xs">12 buses</span>
-          </button>
-          <button className="px-4 py-2 rounded-lg bg-green-500/20 text-green-400 text-sm hover:bg-green-500/30 transition flex items-center gap-2">
-            <i data-lucide="bus" className="w-4 h-4"></i>
-            Umuahia City
-            <span className="bg-green-500/30 px-2 py-0.5 rounded-full text-xs">7 buses</span>
-          </button>
         </div>
       </div>
     </div>
