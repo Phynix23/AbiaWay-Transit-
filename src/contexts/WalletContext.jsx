@@ -5,12 +5,9 @@ const WalletContext = createContext();
 export const useWallet = () => useContext(WalletContext);
 
 export const WalletProvider = ({ children }) => {
-  const [balance, setBalance] = useState(12450);
-  const [transactions, setTransactions] = useState([
-    { id: 1, type: 'debit', description: 'Green Shuttle - Osisioma', amount: 150, date: 'Today, 8:45 AM' },
-    { id: 2, type: 'credit', description: 'Wallet Top-up', amount: 2000, date: 'Yesterday, 6:30 PM' },
-    { id: 3, type: 'debit', description: 'Green Shuttle - Park to Flyover', amount: 150, date: 'Yesterday, 9:15 AM' },
-  ]);
+  // Change initial balance from 12450 to 0
+  const [balance, setBalance] = useState(0);
+  const [transactions, setTransactions] = useState([]); // Start with empty transactions
 
   const addFunds = (amount) => {
     setBalance(prev => prev + amount);
@@ -43,8 +40,15 @@ export const WalletProvider = ({ children }) => {
     }, ...prev].slice(0, 10));
   };
 
+  // Optional: Add a method to refresh balance from ABSIN
+  const refreshBalance = async () => {
+    // This would call ABSIN API to get real balance
+    // For now, just return current balance
+    return balance;
+  };
+
   return (
-    <WalletContext.Provider value={{ balance, transactions, addFunds, deductFunds }}>
+    <WalletContext.Provider value={{ balance, transactions, addFunds, deductFunds, refreshBalance }}>
       {children}
     </WalletContext.Provider>
   );

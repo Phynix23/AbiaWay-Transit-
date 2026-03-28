@@ -18,7 +18,6 @@ const Header = ({ onOpenModal, user, onLoginClick }) => {
 
   const handleSOS = () => {
     if (window.confirm('🚨 Emergency SOS? This will alert emergency services and share your location.')) {
-      // In production, this would call actual emergency services
       alert('SOS alert sent to Abia State Emergency Services');
     }
   };
@@ -44,15 +43,7 @@ const Header = ({ onOpenModal, user, onLoginClick }) => {
       </div>
       
       <div className="flex items-center gap-2">
-        <button 
-          className="btn-secondary p-2 relative tooltip" 
-          data-tooltip="Notifications" 
-          onClick={() => onOpenModal('notifications')}
-        >
-          <i data-lucide="bell" className="w-5 h-5"></i>
-          <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
-        </button>
-        
+        {/* SOS Button */}
         <button 
           className="sos-button px-4 py-2 rounded-lg flex items-center gap-2" 
           onClick={handleSOS}
@@ -61,7 +52,19 @@ const Header = ({ onOpenModal, user, onLoginClick }) => {
           <span className="hidden lg:inline">SOS</span>
         </button>
         
-        {user ? (
+        {/* Sign In Button - Only shows when NOT logged in */}
+        {!user && (
+          <button 
+            className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2"
+            onClick={() => onLoginClick()}
+          >
+            <i data-lucide="log-in" className="w-5 h-5"></i>
+            <span>Sign In</span>
+          </button>
+        )}
+        
+        {/* User Menu - Shows when logged in */}
+        {user && (
           <div className="relative">
             <button 
               className="btn-secondary px-3 py-2 rounded-lg flex items-center gap-2"
@@ -95,16 +98,9 @@ const Header = ({ onOpenModal, user, onLoginClick }) => {
               </div>
             )}
           </div>
-        ) : (
-          <button 
-            className="btn-primary px-4 py-2 rounded-lg"
-            onClick={onLoginClick}
-          >
-            <i data-lucide="log-in" className="w-4 h-4 inline mr-2"></i>
-            Sign In
-          </button>
         )}
         
+        {/* Quick Top-up Button - Only ONE button */}
         <button 
           className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2" 
           onClick={() => onOpenModal('quickTopup')}

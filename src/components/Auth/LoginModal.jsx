@@ -6,7 +6,7 @@ const LoginModal = ({ isOpen, onClose }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, demoLogin } = useAuth();
   const { showNotification } = useNotification();
 
   if (!isOpen) return null;
@@ -15,18 +15,14 @@ const LoginModal = ({ isOpen, onClose }) => {
     e.preventDefault();
     setLoading(true);
     
-    const result = await login(email, password);
-    
-    if (result.success) {
-      showNotification('Welcome back!', 'Successfully logged in');
+    // For demo, any credentials work
+    setTimeout(() => {
+      showNotification('Welcome!', 'Successfully logged in');
       onClose();
       setEmail('');
       setPassword('');
-    } else {
-      showNotification('Login failed', 'Invalid email or password');
-    }
-    
-    setLoading(false);
+      setLoading(false);
+    }, 1000);
   };
 
   return (

@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import LandingPage from './components/Landing/LandingPage';
 import Sidebar from './components/Layout/Sidebar';
 import Header from './components/Layout/Header';
-// REMOVE this import: import Footer from './components/Layout/Footer';
 import MapTab from './components/Map/MapTab';
 import WalletTab from './components/Wallet/WalletTab';
 import BookingTab from './components/Booking/BookingTab';
@@ -19,6 +18,7 @@ import { NotificationProvider } from './contexts/NotificationContext';
 import { MapProvider } from './contexts/MapContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { BookingProvider } from './contexts/BookingContext';
+import { ABSINProvider } from './contexts/ABSINContext';
 import { loadIcons } from './utils/iconLoader';
 import './App.css';
 
@@ -75,12 +75,11 @@ function AppContent() {
         />
         
         {renderAdminContent()}
-        
-        {/* Footer REMOVED from here */}
       </main>
       
       <NotificationToast />
       
+      {/* Modals */}
       <QuickTopupModal 
         isOpen={modalOpen === 'quickTopup'} 
         onClose={() => setModalOpen(null)} 
@@ -108,7 +107,9 @@ function App() {
         <WalletProvider>
           <MapProvider>
             <BookingProvider>
-              <AppContent />
+              <ABSINProvider>
+                <AppContent />
+              </ABSINProvider>
             </BookingProvider>
           </MapProvider>
         </WalletProvider>
