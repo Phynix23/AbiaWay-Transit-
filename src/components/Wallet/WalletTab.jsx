@@ -3,9 +3,10 @@ import { useWallet } from '../../contexts/WalletContext';
 import { getABSINService } from '../../services/absin';
 import { useNotification } from '../../contexts/NotificationContext';
 import CreditCard from './CreditCard';
+import PaymentMethodModal from '../Payment/PaymentMethodModal';
 
 const WalletTab = ({ onOpenModal }) => {
-  const { balance, transactions, addFunds, deductFunds } = useWallet();
+  const { balance, transactions, addFunds, deductFunds, refreshBalance } = useWallet();
   const [topupAmount, setTopupAmount] = useState('');
   const [linkedCard, setLinkedCard] = useState(null);
   const [isLinkingCard, setIsLinkingCard] = useState(false);
@@ -15,6 +16,7 @@ const WalletTab = ({ onOpenModal }) => {
   const [cardPoints, setCardPoints] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [showWelcomeBanner, setShowWelcomeBanner] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const { showNotification } = useNotification();
 
   // Check if this is a first-time user (no transactions)
@@ -118,35 +120,11 @@ const WalletTab = ({ onOpenModal }) => {
     }
   };
 
-  const handleTopup = () => {
-    const amount = parseInt(topupAmount);
-    
-    if (isNaN(amount) || amount <= 0) {
-      showNotification('Error', 'Please enter a valid amount', 'error');
-      return;
-    }
-    
-    if (amount < 50) {
-      showNotification('Error', 'Minimum top-up amount is ₦50', 'error');
-      return;
-    }
-    
-    const totalWithFee = amount + fee;
-    
-    if (window.confirm(`Top up ₦${amount.toLocaleString()}? Fee: ₦${fee}. Total: ₦${totalWithFee.toLocaleString()}`)) {
-      addFunds(amount);
-      setTopupAmount('');
-      showNotification('Top-up Successful', `₦${amount.toLocaleString()} added to your wallet!`, 'success');
-      
-      // Hide welcome banner after first top-up
-      if (isFirstTimeUser) {
-        setShowWelcomeBanner(false);
-      }
-    }
-  };
-
-  const handleSuggestedAmount = (amount) => {
-    setTopupAmount(amount.toString());
+  const handlePaymentSuccess = () => {
+    // Refresh balance after successful payment
+    refreshBalance();
+    showNotification('Success', 'Wallet funded successfully!', 'success');
+    setShowPaymentModal(false);
   };
 
   // Calculate bonus if amount >= 10000
@@ -169,10 +147,10 @@ const WalletTab = ({ onOpenModal }) => {
         </h3>
         <button 
           className="btn-primary px-4 py-2 rounded-lg flex items-center gap-2" 
-          onClick={() => onOpenModal('quickTopup')}
+          onClick={() => setShowPaymentModal(true)}
         >
           <i data-lucide="plus" className="w-5 h-5"></i>
-          <span>Top Up</span>
+          <span>Add Funds</span>
         </button>
       </div>
 
@@ -186,11 +164,11 @@ const WalletTab = ({ onOpenModal }) => {
                 <div>
                   <h4 className="text-lg font-semibold mb-2">👋 Welcome to Abia Way!</h4>
                   <p className="text-sm text-gray-300 mb-3">
-                    Your wallet is empty. Add funds to start using our services.
+                    Your wallet is empty. Choose a payment method to add funds.
                   </p>
                   <button 
                     className="btn-primary px-4 py-2 text-sm"
-                    onClick={() => document.getElementById('topup-input')?.focus()}
+                    onClick={() => setShowPaymentModal(true)}
                   >
                     Add Funds Now
                   </button>
@@ -287,97 +265,57 @@ const WalletTab = ({ onOpenModal }) => {
             )}
           </div>
 
-          {/* Quick Top-up Section - User Controlled Amount */}
+          {/* Payment Methods Section */}
           <div className="glass-card p-6">
             <div className="flex justify-between items-center mb-4">
-              <h4 className="text-lg font-semibold">Top Up Wallet</h4>
-              <span className="text-xs text-gray-400 flex items-center gap-1">
-                <i data-lucide="info" className="w-3 h-3"></i>
-                Fee: ₦{fee}
-              </span>
+              <h4 className="text-lg font-semibold">Payment Methods</h4>
+              <span className="text-xs text-gray-400">Choose how to add funds</span>
             </div>
 
-            {/* Custom Amount Input */}
-            <div className="mb-4">
-              <label className="block text-sm text-gray-400 mb-2">Enter Amount</label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">₦</span>
-                <input 
-                  id="topup-input"
-                  type="number" 
-                  value={topupAmount}
-                  onChange={(e) => setTopupAmount(e.target.value)}
-                  placeholder="0.00"
-                  className="w-full bg-white/10 border border-white/20 rounded-xl pl-10 pr-4 py-4 text-lg focus:outline-none focus:border-primary"
-                />
-              </div>
-              {getBonusMessage() && (
-                <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
-                  <i data-lucide="gift" className="w-3 h-3"></i>
-                  {getBonusMessage()}
-                </p>
-              )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className="p-4 bg-white/5 border border-white/10 rounded-xl text-center hover:border-blue-500 transition"
+              >
+                <i data-lucide="credit-card" className="w-8 h-8 mx-auto mb-2 text-blue-400"></i>
+                <p className="text-sm font-medium">Card</p>
+                <p className="text-xs text-gray-500">Visa/Mastercard</p>
+              </button>
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className="p-4 bg-white/5 border border-white/10 rounded-xl text-center hover:border-green-500 transition"
+              >
+                <i data-lucide="smartphone" className="w-8 h-8 mx-auto mb-2 text-green-400"></i>
+                <p className="text-sm font-medium">USSD</p>
+                <p className="text-xs text-gray-500">Quick banking</p>
+              </button>
+              <button
+                onClick={() => setShowPaymentModal(true)}
+                className="p-4 bg-white/5 border border-white/10 rounded-xl text-center hover:border-purple-500 transition"
+              >
+                <i data-lucide="banknote" className="w-8 h-8 mx-auto mb-2 text-purple-400"></i>
+                <p className="text-sm font-medium">Transfer</p>
+                <p className="text-xs text-gray-500">Bank transfer</p>
+              </button>
+              <button
+                onClick={() => setShowLinkModal(true)}
+                className="p-4 bg-white/5 border border-white/10 rounded-xl text-center hover:border-orange-500 transition"
+              >
+                <i data-lucide="credit-card" className="w-8 h-8 mx-auto mb-2 text-orange-400"></i>
+                <p className="text-sm font-medium">ABSIN</p>
+                <p className="text-xs text-gray-500">State card</p>
+              </button>
             </div>
 
-            {/* Suggested Amounts (optional, user can ignore) */}
-            {showSuggestions && (
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-xs text-gray-400">Suggested amounts:</p>
-                  <button 
-                    className="text-xs text-gray-500 hover:text-gray-300"
-                    onClick={() => setShowSuggestions(false)}
-                  >
-                    Hide
-                  </button>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {suggestedAmounts.map(amount => (
-                    <button
-                      key={amount}
-                      onClick={() => handleSuggestedAmount(amount)}
-                      className="px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm hover:border-primary hover:bg-primary/10 transition"
-                    >
-                      ₦{amount.toLocaleString()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Summary */}
-            {topupAmount && parseInt(topupAmount) > 0 && (
-              <div className="p-4 bg-white/5 rounded-xl mb-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Amount to add:</span>
-                  <span className="font-semibold">₦{parseInt(topupAmount).toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="text-gray-400">Processing fee:</span>
-                  <span className="text-yellow-400">₦{fee}</span>
-                </div>
-                <div className="flex justify-between text-lg font-bold pt-2 border-t border-white/10 mt-2">
-                  <span>Total to pay:</span>
-                  <span className="text-primary">₦{(parseInt(topupAmount) + fee).toLocaleString()}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Add Funds Button */}
-            <button 
-              className="w-full btn-primary py-4 rounded-xl text-lg font-semibold"
-              onClick={handleTopup}
-              disabled={!topupAmount || parseInt(topupAmount) <= 0}
-            >
-              {topupAmount && parseInt(topupAmount) > 0 
-                ? `Add ₦${parseInt(topupAmount).toLocaleString()} to Wallet` 
-                : 'Enter Amount to Top Up'}
-            </button>
-
-            {/* Minimum Notice */}
-            <p className="text-xs text-gray-500 text-center mt-3">
-              Minimum top-up: ₦50 | Fee: ₦50 per transaction
-            </p>
+            <div className="p-3 bg-yellow-500/10 rounded-lg text-xs">
+              <p className="text-yellow-400">💡 Payment Options:</p>
+              <ul className="text-gray-400 mt-1 space-y-1">
+                <li>• Card: Visa, Mastercard, Verve (Fee: ₦50)</li>
+                <li>• USSD: Quick banking via phone (Fee: ₦30)</li>
+                <li>• Transfer: Bank transfer (Fee: ₦0)</li>
+                <li>• ABSIN Card: State card (Fee: ₦50)</li>
+              </ul>
+            </div>
           </div>
 
           {/* QR Code Payment Section */}
@@ -465,9 +403,9 @@ const WalletTab = ({ onOpenModal }) => {
                 <p className="text-gray-400 text-sm">Add funds to see insights</p>
                 <button 
                   className="mt-3 text-primary text-sm hover:text-primary-light transition"
-                  onClick={() => document.getElementById('topup-input')?.focus()}
+                  onClick={() => setShowPaymentModal(true)}
                 >
-                  Top up now →
+                  Add funds now →
                 </button>
               </div>
             ) : (
@@ -502,7 +440,7 @@ const WalletTab = ({ onOpenModal }) => {
         </div>
       </div>
 
-      {/* Link Card Modal */}
+      {/* Link ABSIN Card Modal */}
       {showLinkModal && (
         <div className="fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setShowLinkModal(false)}></div>
@@ -575,6 +513,13 @@ const WalletTab = ({ onOpenModal }) => {
           </div>
         </div>
       )}
+
+      {/* Payment Method Modal */}
+      <PaymentMethodModal
+        isOpen={showPaymentModal}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+      />
     </div>
   );
 };

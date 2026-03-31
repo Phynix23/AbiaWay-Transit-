@@ -11,6 +11,8 @@ import QuickTopupModal from './components/Modals/QuickTopupModal';
 import QRCodeModal from './components/Modals/QRCodeModal';
 import NotificationsModal from './components/Modals/NotificationsModal';
 import LoginModal from './components/Auth/LoginModal';
+import ProfileModal from './components/Modals/ProfileModal';
+import SettingsModal from './components/Modals/SettingsModal';
 import LoadingSpinner from './components/Layout/LoadingSpinner';
 import AdminGuard from './components/Auth/AdminGuard';
 import { WalletProvider } from './contexts/WalletContext';
@@ -43,7 +45,6 @@ function AppContent() {
 
   // Admin-only pages wrapped with AdminGuard
   const renderAdminContent = () => {
-    // Driver dashboard is admin-only
     if (currentTab === 'driver') {
       return (
         <AdminGuard requiredRole="driver">
@@ -52,7 +53,6 @@ function AppContent() {
       );
     }
 
-    // Public pages (map, wallet, booking)
     return (
       <>
         {currentTab === 'map' && <MapTab />}
@@ -62,17 +62,19 @@ function AppContent() {
     );
   };
 
-  // Main app - NO FOOTER HERE
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
       <Sidebar currentTab={currentTab} onTabChange={setCurrentTab} />
       
       <main className="flex-1 lg:ml-64 p-4 lg:p-8 overflow-y-auto custom-scrollbar min-h-screen">
-        <Header 
-          onOpenModal={setModalOpen} 
-          user={user} 
-          onLoginClick={() => setModalOpen('login')} 
-        />
+        {/* Header only shows on Map/Live Tracking tab */}
+        {currentTab === 'map' && (
+          <Header 
+            onOpenModal={setModalOpen} 
+            user={user} 
+            onLoginClick={() => setModalOpen('login')} 
+          />
+        )}
         
         {renderAdminContent()}
       </main>
@@ -94,6 +96,14 @@ function AppContent() {
       />
       <LoginModal 
         isOpen={modalOpen === 'login'} 
+        onClose={() => setModalOpen(null)} 
+      />
+      <ProfileModal 
+        isOpen={modalOpen === 'profile'} 
+        onClose={() => setModalOpen(null)} 
+      />
+      <SettingsModal 
+        isOpen={modalOpen === 'settings'} 
         onClose={() => setModalOpen(null)} 
       />
     </div>

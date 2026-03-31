@@ -5,8 +5,8 @@ import { useNotification } from '../../contexts/NotificationContext';
 const QuickTopupModal = ({ isOpen, onClose }) => {
   const [selectedAmount, setSelectedAmount] = useState(1000);
   const [customAmount, setCustomAmount] = useState('');
-  const [showSuggestions, setShowSuggestions] = useState(true);
-  const { addFunds } = useWallet();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const { addFunds, balance } = useWallet();
   const { showNotification } = useNotification();
 
   if (!isOpen) return null;
@@ -14,117 +14,177 @@ const QuickTopupModal = ({ isOpen, onClose }) => {
   const suggestedAmounts = [1000, 2000, 5000, 10000, 20000];
   const fee = 50;
 
-  const handleTopup = () => {
+  const getTotalAmount = () => {
     const amount = customAmount ? parseInt(customAmount) : selectedAmount;
-    if (amount > 0) {
-      addFunds(amount);
-      showNotification('Top-up Successful', `₦${amount.toLocaleString()} added to your wallet!`);
-      onClose();
-      setCustomAmount('');
-    }
+    return amount + fee;
   };
 
   const getBonusMessage = () => {
     const amount = customAmount ? parseInt(customAmount) : selectedAmount;
     if (amount >= 10000) {
       const bonus = Math.floor(amount * 0.05);
-      return `+ ${bonus.toLocaleString()} bonus points!`;
+      return `🎁 +${bonus.toLocaleString()} bonus points!`;
     }
     return null;
   };
 
+  const handleTopup = () => {
+    const amount = customAmount ? parseInt(customAmount) : selectedAmount;
+    
+    if (isNaN(amount) || amount <= 0) {
+      showNotification('Error', 'Please enter a valid amount', 'error');
+      return;
+    }
+    
+    if (amount < 50) {
+      showNotification('Error', 'Minimum top-up amount is ₦50', 'error');
+      return;
+    }
+    
+    setIsProcessing(true);
+    
+    // Simulate payment processing
+    setTimeout(() => {
+      addFunds(amount);
+      showNotification(
+        'Top-up Successful!', 
+        `₦${amount.toLocaleString()} added to your wallet! ${getBonusMessage() || ''}`,
+        'success'
+      );
+      setIsProcessing(false);
+      onClose();
+      setCustomAmount('');
+    }, 1500);
+  };
+
+  const handleSelectAmount = (amount) => {
+    setSelectedAmount(amount);
+    setCustomAmount('');
+  };
+
   return (
-    <div className="fixed inset-0 z-50">
-      <div className="modal-overlay absolute inset-0" onClick={onClose}></div>
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md mx-4">
-        <div className="glass-card p-6">
+    <div className="fixed inset-0 z-[9999] animate-fadeIn">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose}></div>
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md mx-4 animate-slideUp">
+        <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 border border-white/10 shadow-2xl">
+          {/* Header */}
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold">Quick Top-up</h3>
-            <button onClick={onClose} className="text-gray-400 hover:text-white">
-              <i data-lucide="x" className="w-6 h-6"></i>
+            <div>
+              <h3 className="text-2xl font-bold text-white">Quick Top-up</h3>
+              <p className="text-sm text-gray-400 mt-1">Add funds to your wallet</p>
+            </div>
+            <button 
+              onClick={onClose} 
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"
+            >
+              <i data-lucide="x" className="w-4 h-4 text-gray-400"></i>
             </button>
           </div>
           
-          {/* Quick Amount Buttons */}
-          {showSuggestions && (
-            <div className="mb-4">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-xs text-gray-400">Suggested amounts:</p>
-                <button 
-                  className="text-xs text-gray-500 hover:text-gray-300"
-                  onClick={() => setShowSuggestions(false)}
-                >
-                  Hide
-                </button>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                {suggestedAmounts.map(amount => (
-                  <button
-                    key={amount}
-                    onClick={() => setSelectedAmount(amount)}
-                    className={`p-3 rounded-xl text-center transition-all ${
-                      selectedAmount === amount 
-                        ? 'bg-green-600 text-white border-green-600 scale-105' 
-                        : 'bg-white/5 border border-white/10 hover:border-green-600'
-                    }`}
-                  >
-                    <span className="block font-bold text-lg">₦{amount.toLocaleString()}</span>
-                    <span className="text-xs opacity-80">+₦{fee} fee</span>
-                  </button>
-                ))}
-              </div>
+          {/* Current Balance */}
+          <div className="mb-6 p-4 bg-green-500/10 rounded-xl border border-green-500/30">
+            <div className="flex justify-between items-center">
+              <span className="text-gray-400">Current Balance</span>
+              <span className="text-2xl font-bold text-green-400">₦{balance.toLocaleString()}</span>
             </div>
-          )}
+          </div>
+          
+          {/* Suggested Amounts */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Quick Select
+            </label>
+            <div className="grid grid-cols-5 gap-2">
+              {suggestedAmounts.map(amount => (
+                <button
+                  key={amount}
+                  onClick={() => handleSelectAmount(amount)}
+                  className={`p-2 rounded-xl text-center transition-all duration-200 ${
+                    selectedAmount === amount && !customAmount
+                      ? 'bg-green-600 text-white scale-105 shadow-lg' 
+                      : 'bg-white/10 text-white hover:bg-white/20'
+                  }`}
+                >
+                  <span className="block font-semibold">₦{amount.toLocaleString()}</span>
+                  <span className="text-xs opacity-80">+₦{fee}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
-          {/* Custom Amount Input */}
-          <div className="mb-6">
-            <label className="block text-sm text-gray-400 mb-2">Or enter custom amount</label>
-            <div className="flex">
-              <span className="px-4 py-3 bg-gray-800 rounded-l-lg border border-r-0 border-gray-700">₦</span>
+          {/* Custom Amount */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-300 mb-2">
+              Custom Amount
+            </label>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl">₦</span>
               <input 
                 type="number" 
                 value={customAmount}
-                onChange={(e) => setCustomAmount(e.target.value)}
-                className="input-field flex-1 px-4 py-3 rounded-r-lg" 
+                onChange={(e) => {
+                  setCustomAmount(e.target.value);
+                  setSelectedAmount(null);
+                }}
                 placeholder="Enter amount"
+                className="w-full bg-white/10 border border-white/20 rounded-xl pl-10 pr-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-green-500 transition"
               />
             </div>
-            {getBonusMessage() && (
-              <p className="text-xs text-green-400 mt-2 flex items-center gap-1">
-                <i data-lucide="gift" className="w-3 h-3"></i>
+          </div>
+          
+          {/* Bonus Message */}
+          {getBonusMessage() && (
+            <div className="mb-4 p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/30 animate-pulse">
+              <p className="text-yellow-400 text-sm flex items-center gap-2">
+                <i data-lucide="gift" className="w-4 h-4"></i>
                 {getBonusMessage()}
               </p>
-            )}
-          </div>
-
-          {/* Summary */}
-          {((customAmount && parseInt(customAmount) > 0) || selectedAmount) && (
-            <div className="p-3 bg-white/5 rounded-lg mb-4">
-              <div className="flex justify-between text-sm mb-1">
-                <span>Amount:</span>
-                <span>₦{(customAmount ? parseInt(customAmount) : selectedAmount).toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm mb-1">
-                <span>Fee:</span>
-                <span className="text-yellow-400">₦{fee}</span>
-              </div>
-              <div className="flex justify-between text-base font-bold pt-2 border-t border-white/10 mt-1">
-                <span>Total:</span>
-                <span className="text-primary">₦{((customAmount ? parseInt(customAmount) : selectedAmount) + fee).toLocaleString()}</span>
-              </div>
             </div>
           )}
           
+          {/* Summary */}
+          <div className="mb-6 p-4 bg-white/5 rounded-xl">
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-gray-400">Amount to add:</span>
+              <span className="font-semibold text-white">
+                ₦{(customAmount ? parseInt(customAmount) : selectedAmount).toLocaleString()}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm mb-2">
+              <span className="text-gray-400">Processing fee:</span>
+              <span className="text-yellow-400">₦{fee}</span>
+            </div>
+            <div className="flex justify-between text-lg font-bold pt-2 border-t border-white/10 mt-2">
+              <span>Total to pay:</span>
+              <span className="text-green-400">₦{getTotalAmount().toLocaleString()}</span>
+            </div>
+          </div>
+          
+          {/* Submit Button */}
           <button 
-            className="w-full btn-primary py-3 rounded-lg font-semibold"
+            className="w-full bg-gradient-to-r from-green-600 to-green-500 hover:from-green-500 hover:to-green-600 text-white py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
             onClick={handleTopup}
+            disabled={isProcessing}
           >
-            Add Funds
+            {isProcessing ? (
+              <>
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Processing...
+              </>
+            ) : (
+              <>
+                <i data-lucide="credit-card" className="w-5 h-5"></i>
+                Add Funds
+              </>
+            )}
           </button>
           
-          <p className="text-xs text-gray-500 text-center mt-3">
-            Minimum top-up: ₦50 | Fee: ₦{fee} per transaction
-          </p>
+          {/* Info */}
+          <div className="mt-4 text-center">
+            <p className="text-xs text-gray-500">
+              💡 Minimum top-up: ₦50 | Fee: ₦{fee} per transaction
+            </p>
+          </div>
         </div>
       </div>
     </div>

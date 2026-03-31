@@ -89,14 +89,14 @@ const LandingPage = ({ onGetStarted }) => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white overflow-x-hidden">
-      {/* Floating Animated Background Elements */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+      {/* Floating Animated Background Elements - Fixed z-index */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         <div className="absolute top-20 left-10 w-64 h-64 bg-green-600/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-600/10 rounded-full blur-3xl animate-pulse delay-1000"></div>
         <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-purple-600/10 rounded-full blur-3xl animate-pulse delay-700"></div>
       </div>
 
-      {/* Navigation */}
+      {/* Navigation - Fixed z-index */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-900/80 backdrop-blur-md border-b border-white/10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex justify-between items-center">
@@ -157,11 +157,11 @@ const LandingPage = ({ onGetStarted }) => {
         </div>
       </nav>
 
-      {/* Hero Section with Parallax */}
+      {/* Hero Section with Parallax - Added position relative and z-index */}
       <section 
         ref={heroRef}
         className="container mx-auto px-4 pt-32 pb-16 relative"
-        style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+        style={{ transform: `translateY(${scrollY * 0.5}px)`, position: 'relative', zIndex: 1 }}
       >
         <div className="grid lg:grid-cols-2 gap-12 items-center">
           <div className="animate-fadeInLeft">
@@ -224,7 +224,7 @@ const LandingPage = ({ onGetStarted }) => {
                 className="rounded-2xl w-full h-full object-cover opacity-90 hover:opacity-100 transition-opacity duration-500"
               />
               
-              {/* Floating Cards */}
+              {/* Floating Cards - Fixed positioning to prevent overlap */}
               <div className="absolute -top-6 -right-6 w-24 h-24 bg-gradient-to-br from-green-500 to-green-600 rounded-2xl flex items-center justify-center animate-float delay-300 shadow-2xl">
                 <Clock className="w-10 h-10 text-white" />
               </div>
@@ -237,7 +237,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* Features Section */}
-      <section id="features" ref={featuresRef} className="container mx-auto px-4 py-24 opacity-0 translate-y-10 transition-all duration-1000">
+      <section id="features" ref={featuresRef} className="container mx-auto px-4 py-24 opacity-0 translate-y-10 transition-all duration-1000 relative z-10">
         <h2 className="text-4xl lg:text-5xl font-bold text-center mb-16">
           <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
             Why Choose Abia Way?
@@ -252,7 +252,7 @@ const LandingPage = ({ onGetStarted }) => {
             <div
               key={index}
               className="group relative glass-card p-8 text-center hover:scale-105 transition-all duration-500 animate-fadeInUp"
-              style={{ animationDelay: `${feature.delay}ms` }}
+              style={{ animationDelay: `${feature.delay}ms`, position: 'relative', zIndex: 2 }}
             >
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
               <div className={`w-16 h-16 bg-${feature.color}-600/20 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300`}>
@@ -270,7 +270,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" ref={stepsRef} className="container mx-auto px-4 py-24 opacity-0 translate-y-10 transition-all duration-1000">
+      <section id="how-it-works" ref={stepsRef} className="container mx-auto px-4 py-24 opacity-0 translate-y-10 transition-all duration-1000 relative z-10">
         <h2 className="text-4xl lg:text-5xl font-bold text-center mb-16">
           <span className="bg-gradient-to-r from-green-400 to-blue-400 bg-clip-text text-transparent">
             How It Works
@@ -286,7 +286,7 @@ const LandingPage = ({ onGetStarted }) => {
             <div
               key={index}
               className="text-center group animate-fadeInUp"
-              style={{ animationDelay: `${index * 200}ms` }}
+              style={{ animationDelay: `${index * 200}ms`, position: 'relative', zIndex: 2 }}
             >
               <div className="relative mb-6">
                 <div className="w-20 h-20 mx-auto bg-gradient-to-r from-green-600 to-green-500 rounded-2xl flex items-center justify-center text-2xl font-bold transform group-hover:rotate-6 group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-green-600/30">
@@ -303,7 +303,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* Stats Section with Counter Animation */}
-      <section id="stats" ref={statsRef} className="container mx-auto px-4 py-24">
+      <section id="stats" ref={statsRef} className="container mx-auto px-4 py-24 relative z-10">
         <div className="glass-card p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-600/10 to-blue-600/10 animate-gradient"></div>
           <div className="grid md:grid-cols-4 gap-8 text-center relative z-10">
@@ -351,7 +351,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-16">
+      <section className="container mx-auto px-4 py-16 relative z-10">
         <div className="glass-card p-16 text-center relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-r from-green-600/20 to-blue-600/20 animate-pulse"></div>
           <div className="relative z-10">
@@ -373,7 +373,7 @@ const LandingPage = ({ onGetStarted }) => {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/10 mt-16 relative">
+      <footer className="border-t border-white/10 mt-16 relative z-10">
         <div className="container mx-auto px-4 py-12">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
@@ -468,17 +468,6 @@ const LandingPage = ({ onGetStarted }) => {
           }
         }
         
-        @keyframes countUp {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        
         .animate-float {
           animation: float 3s ease-in-out infinite;
         }
@@ -503,10 +492,6 @@ const LandingPage = ({ onGetStarted }) => {
         
         .animate-bounce-slow {
           animation: bounce 2s infinite;
-        }
-        
-        .animate-countUp {
-          animation: countUp 0.5s ease-out forwards;
         }
         
         .delay-100 { animation-delay: 0.1s; }

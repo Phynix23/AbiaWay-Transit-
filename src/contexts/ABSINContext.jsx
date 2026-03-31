@@ -1,9 +1,15 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
 import { getABSINService } from '../services/absin';
 
-const ABSINContext = createContext();
+const ABSINContext = createContext(null);
 
-export const useABSIN = () => useContext(ABSINContext);
+export const useABSIN = () => {
+  const context = useContext(ABSINContext);
+  if (!context) {
+    throw new Error('useABSIN must be used within an ABSINProvider');
+  }
+  return context;
+};
 
 export const ABSINProvider = ({ children }) => {
   const [service, setService] = useState(null);
@@ -14,11 +20,25 @@ export const ABSINProvider = ({ children }) => {
 
   useEffect(() => {
     const init = async () => {
-      const absinService = getABSINService();
-      const result = await absinService.initialize();
-      
-      if (result.success) {
-        setService(absinService);
+      try {
+        const absinService = getABSINService();
+        const result = await absinService.initialize();
+        
+        if (result.success) {
+          setService(absinService);
+          setIsInitialized(true);
+          console.log('✅ ABSIN Service initialized');
+        } else {
+          console.warn('⚠️ ABSIN Service initialization returned false');
+          // Still set a dummy service so the app doesn't crash
+          setService(absinService);
+          setIsInitialized(true);
+        }
+      } catch (error) {
+        console.error('❌ ABSIN initialization error:', error);
+        // Create a dummy service that won't crash
+        const dummyService = getABSINService();
+        setService(dummyService);
         setIsInitialized(true);
       }
     };
@@ -28,33 +48,35 @@ export const ABSINProvider = ({ children }) => {
 
   const readCard = async (method = 'auto') => {
     if (!service) return null;
-    
-    const card = await service.readCard(method);
-    
-    if (card && card.success !== false) {
-      setActiveCard(card);
-      const balanceData = await service.paymentProcessor.checkBalance(card.cardId);
-      setBalance(balanceData.balance);
-      const pointsData = await service.getCardPoints();
-      setPoints(pointsData.total);
+    try {
+      const card = await service.readCard(method);
+      if (card && card.success !== false) {
+        setActiveCard(card);
+        if (card.balance) setBalance(card.balance);
+        return card;
+      }
+      return null;
+    } catch (error) {
+      console.error('Read card error:', error);
+      return null;
     }
-    
-    return card;
   };
 
   const processPayment = async (amount, rideDetails) => {
     if (!service) return null;
-    
-    const result = await service.processPayment(amount, rideDetails);
-    
-    if (result.success) {
-      setBalance(result.balance);
-      if (result.pointsEarned) {
-        setPoints(prev => prev + result.pointsEarned);
+    try {
+      const result = await service.processPayment(amount, rideDetails);
+      if (result.success) {
+        setBalance(result.balance);
+        if (result.pointsEarned) {
+          setPoints(prev => prev + result.pointsEarned);
+        }
       }
+      return result;
+    } catch (error) {
+      console.error('Payment processing error:', error);
+      return { success: false, error: error.message };
     }
-    
-    return result;
   };
 
   const clearCard = () => {
@@ -75,9 +97,5 @@ export const ABSINProvider = ({ children }) => {
     clearCard
   };
 
-  return (
-    <ABSINContext.Provider value={value}>
-      {children}
-    </ABSINContext.Provider>
-  );
+  return <ABSINContext.Provider value={value}>{children}</ABSINContext.Provider>;
 };
